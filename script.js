@@ -82,9 +82,10 @@ async function findRunningRoute(length) {
     }
 }
 
-// Znajdowanie pobliskich terenów zielonych
 async function findNearbyPark(position) {
-    const url = `https://api.openrouteservice.org/geocode/search?api_key=5b3ce3597851110001cf6248f259e16696334675a38e05b05a2f1fff&text=park&focus.point.lat=${position.lat}&focus.point.lon=${position.lng}&size=1`;
+    const accessToken = 'pk.eyJ1Ijoic3BhY2hvbHNraXV6IiwiYSI6ImNtNTlxeG14ZTBzZ24ya3I3NWJxaG45bGEifQ.gr1iTou9gln94P7i9IimbA';
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/park.json?access_token=${accessToken}&proximity=${position.lng},${position.lat}&limit=1`;
+
     const response = await fetch(url);
 
     if (!response.ok) {
@@ -95,15 +96,20 @@ async function findNearbyPark(position) {
     if (data.features.length === 0) return null;
 
     const park = data.features[0].geometry.coordinates;
-    return { lat: park[1], lng: park[0] }; // Zwraca współrzędne parku
+    return { lat: park[1], lng: park[0] }; 
 }
+
 
 // Pobieranie trasy biegowej za pomocą GraphHopper VRP API
 async function fetchRunningRoute(startCoords, length) {
+    
+    console.log(startCoords.lng)
+    console.log(startCoords.lat)
+
     const lengthInKm = length * 1000
     const requestData = {
         "points": [
-          [,
+          [
             startCoords.lng,
             startCoords.lat
           ]
