@@ -28,16 +28,15 @@ body, html {
 .screen {
     flex: 1;
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: column; /* Umożliwia układ w kolumnie */
     background-color: #f0f0f0;
+    position: relative;
 }
 
 .map-container {
-    width: 90%;
-    height: 90%;
-    border: 1px solid #ccc;
-    border-radius: 15px;
+    flex: 1; /* Zajmuje pozostałą przestrzeń */
+    width: 100%;
+    border: none;
 }
 
 .buttons {
@@ -45,7 +44,10 @@ body, html {
     justify-content: space-evenly;
     padding: 10px 20px;
     background-color: #f5f5f5;
-    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    position: sticky; /* Przyciski zawsze widoczne na górze */
+    top: 0;
+    z-index: 1000; /* Ustawienie na najwyższą warstwę */
 }
 
 button {
@@ -79,3 +81,48 @@ button:hover {
     background-color: #2196F3;
     color: white;
 }
+
+
+.route-length {
+    padding: 8px 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #fff;
+    font-family: 'Roboto', sans-serif;
+}
+
+.route-list-container {
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+    position: absolute;
+    top: 0; /* Lista zaczyna się od góry */
+    right: 0; /* Lista po prawej stronie */
+    height: 100%; /* Pełna wysokość kontenera */
+    width: 40%; /* Zajmuje 40% szerokości telefonu */
+    display: none; /* Ukryta domyślnie */
+}
+
+.route-list-container ul {
+    list-style: none;
+    padding: 0;
+}
+
+.route-list-container li {
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: 8px;
+    background-color: #e0e0e0;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.route-list-container li:hover {
+    background-color: #d0d0d0;
+}
+

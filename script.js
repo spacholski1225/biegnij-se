@@ -2,12 +2,15 @@ let map;
 let marker;
 let mapInitialized = false;
 
+// Przyciski i kontrolki
 document.getElementById('start').addEventListener('click', initializeMap);
 document.getElementById('stop').addEventListener('click', stopTracking);
-document.getElementById('search').addEventListener('click', () => { // {{ edit_1 }}
-    const destination = prompt("Podaj miejsce docelowe:"); // Prompt for destination
-    if (destination) {
-        searchRoute(destination); // Call searchRoute with the provided destination
+document.getElementById('search').addEventListener('click', () => {
+    const length = parseFloat(document.getElementById('route-length').value);
+    if (!isNaN(length)) {
+        findRunningRoute(length);
+    } else {
+        alert("Wybierz długość trasy!");
     }
 });
 
@@ -18,6 +21,8 @@ function initializeMap() {
         } else {
             alert("Geolokalizacja nie jest wspierana przez tę przeglądarkę.");
         }
+    } else {
+        alert("Mapa jest już zainicjalizowana.");
     }
 }
 
@@ -52,29 +57,108 @@ function handleError(error) {
     console.error(`Błąd geolokalizacji: ${error.message}`);
 }
 
-function searchRoute(destination) {
-    if (mapInitialized) {
-        const destinationCoords = getDestinationCoordinates(destination);
-        
-        if (destinationCoords) {
-            const routeControl = L.Routing.control({
-                waypoints: [
-                    L.latLng(marker.getLatLng().lat, marker.getLatLng().lng), // Start point
-                    L.latLng(destinationCoords.lat, destinationCoords.lng) // Destination point
-                ],
-                routeWhileDragging: true
-            }).addTo(map);
-        } else {
-            alert("Nie można znaleźć podanego miejsca.");
-        }
-    } else {
+// Znajdowanie i wyświetlanie tras biegowych
+async function findRunningRoute(length) {
+    if (!mapInitialized) {
         alert("Najpierw zainicjalizuj mapę.");
+        return;
+    }
+
+    const currentPosition = marker.getLatLng();
+    try {
+        const parkCoordinates = await findNearbyPark(currentPosition);
+        if (!parkCoordinates) {
+            alert("Nie znaleziono pobliskich parków lub terenów zielonych.");
+            return;
+        }
+
+        console.log("teraz bedzie szukac trasy");
+        const routeCoords = await fetchRunningRoute(parkCoordinates, length);
+        console.log("udalo sie wyszukac trase teraz bedzie wyswietlac na mapie");
+        showRouteOnMap(routeCoords);
+    } catch (error) {
+        console.error("Błąd podczas wyszukiwania trasy:", error.message);
+        alert("Nie udało się wygenerować trasy.");
     }
 }
 
-// Function to get destination coordinates (this is a placeholder)
-function getDestinationCoordinates(destination) {
-    // Implement logic to convert destination name to coordinates
-    // For example, using a geocoding API
-    return { lat: 52.2297, lng: 21.0122 }; // Example coordinates for demonstration
+// Znajdowanie pobliskich terenów zielonych
+async function findNearbyPark(position) {
+    const url = `https://api.openrouteservice.org/geocode/search?api_key=5b3ce3597851110001cf6248f259e16696334675a38e05b05a2f1fff&text=park&focus.point.lat=${position.lat}&focus.point.lon=${position.lng}&size=1`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error("Błąd podczas wyszukiwania parków.");
+    }
+
+    const data = await response.json();
+    if (data.features.length === 0) return null;
+
+    const park = data.features[0].geometry.coordinates;
+    return { lat: park[1], lng: park[0] }; // Zwraca współrzędne parku
+}
+
+// Pobieranie trasy biegowej za pomocą GraphHopper VRP API
+async function fetchRunningRoute(startCoords, length) {
+    const lengthInKm = length * 1000
+    const requestData = {
+        "points": [
+          [,
+            startCoords.lng,
+            startCoords.lat
+          ]
+        ],
+        "snap_preventions": [
+          "motorway",
+          "ferry",
+          "tunnel"
+        ],
+        "details": [
+          "road_class",
+          "surface"
+        ],
+        "profile": "foot",
+        "locale": "en",
+        "instructions": true,
+        "calc_points": true,
+        "points_encoded": false,
+        "algorithm": "round_trip",
+        "round_trip.distance": lengthInKm
+      };
+
+    // API URL z Twoim kluczem
+    const apiKey = '93a3b274-79b8-4135-b194-ffa540553b68';
+    const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
+
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    });
+
+    if (!response.ok) {
+        throw new Error("Błąd podczas pobierania trasy.");
+    }
+
+    const data = await response.json();
+    
+    if (data.paths && data.paths.length > 0) {
+        const path = data.paths[0];
+        
+        return path.points.coordinates.map(coord => ({ lat: coord[1], lng: coord[0] }));
+    } else {
+        throw new Error("Brak trasy w odpowiedzi API.");
+    }
+}
+
+
+// Wyświetlanie trasy na mapie
+function showRouteOnMap(coordinates) {
+    const waypoints = coordinates.map(coord => L.latLng(coord.lat, coord.lng));
+    L.Routing.control({
+        waypoints: waypoints,
+        routeWhileDragging: true,
+    }).addTo(map);
 }

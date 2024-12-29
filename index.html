@@ -18,10 +18,16 @@
         <div class="buttons">
             <button id="start" class="green-button"><i class="fas fa-play"></i> Start</button>
             <button id="stop" class="red-button"><i class="fas fa-stop"></i> Stop</button>
+            <select id="route-length">
+                <option value="2">2 km</option>
+                <option value="5">5 km</option>
+                <option value="10">10 km</option>
+            </select>
             <button id="search" class="blue-button"><i class="fas fa-route"></i> Szukaj trasy</button>
+            
         </div>
+        <div id="route-list" class="route-list-container"></div>
     </div>
-
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <script src="script.js"></script>
