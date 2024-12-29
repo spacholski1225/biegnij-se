@@ -2,7 +2,6 @@ let map;
 let marker;
 let mapInitialized = false;
 
-// Przyciski i kontrolki
 document.getElementById('start').addEventListener('click', initializeMap);
 document.getElementById('stop').addEventListener('click', stopTracking);
 document.getElementById('search').addEventListener('click', () => {
@@ -84,7 +83,7 @@ async function findRunningRoute(length) {
 
 async function findNearbyPark(position) {
     const accessToken = 'pk.eyJ1Ijoic3BhY2hvbHNraXV6IiwiYSI6ImNtNTlxeG14ZTBzZ24ya3I3NWJxaG45bGEifQ.gr1iTou9gln94P7i9IimbA';
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/park.json?access_token=${accessToken}&proximity=${position.lng},${position.lat}&limit=1`;
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/park.json?access_token=${accessToken}&proximity=${position.lng},${position.lat}&limit=5`;
 
     const response = await fetch(url);
 
@@ -93,10 +92,13 @@ async function findNearbyPark(position) {
     }
 
     const data = await response.json();
-    if (data.features.length === 0) return null;
+    if (data.features.length === 0) return [];
 
-    const park = data.features[0].geometry.coordinates;
-    return { lat: park[1], lng: park[0] }; 
+    return data.features.map(feature => ({
+        name: feature.text, 
+        lat: feature.geometry.coordinates[1], 
+        lng: feature.geometry.coordinates[0]
+    }));
 }
 
 
@@ -132,7 +134,6 @@ async function fetchRunningRoute(startCoords, length) {
         "round_trip.distance": lengthInKm
       };
 
-    // API URL z Twoim kluczem
     const apiKey = '93a3b274-79b8-4135-b194-ffa540553b68';
     const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
 
@@ -159,8 +160,6 @@ async function fetchRunningRoute(startCoords, length) {
     }
 }
 
-
-// Wyświetlanie trasy na mapie
 function showRouteOnMap(coordinates) {
     const waypoints = coordinates.map(coord => L.latLng(coord.lat, coord.lng));
     L.Routing.control({
