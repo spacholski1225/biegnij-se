@@ -1,13 +1,18 @@
 let map;
 let marker;
 let mapInitialized = false;
+let selectedPark = null;
 
 document.getElementById('start').addEventListener('click', initializeMap);
 document.getElementById('stop').addEventListener('click', stopTracking);
 document.getElementById('search').addEventListener('click', () => {
     const length = parseFloat(document.getElementById('route-length').value);
+    if (!selectedPark) {
+        alert("Najpierw wybierz park z listy!");
+        return;
+    }
     if (!isNaN(length)) {
-        findRunningRoute(length);
+        findRunningRoute(selectedPark, length);
     } else {
         alert("Wybierz długość trasy!");
     }
@@ -36,11 +41,14 @@ function displayParkList(parks) {
     const parkList = document.getElementById('parks');
 
     parkList.innerHTML = ''; // Czyść listę przed dodaniem nowych elementów
+    selectedPark = null; // Resetuj wybrany park
 
     parks.forEach(park => {
         const li = document.createElement('li');
         li.textContent = park.name;
         li.addEventListener('click', () => {
+            selectedPark = park; // Ustaw wybrany park
+            highlightSelectedPark(li); // Podświetl kliknięty element
             map.setView([park.lat, park.lng], 15);
             L.marker([park.lat, park.lng]).addTo(map)
                 .bindPopup(`Park: ${park.name}`)
@@ -51,6 +59,15 @@ function displayParkList(parks) {
 
     parkListContainer.style.display = 'block'; // Wyświetl kontener listy parków
 }
+
+function highlightSelectedPark(selectedElement) {
+    const allListItems = document.querySelectorAll('#parks li');
+    allListItems.forEach(item => {
+        item.style.backgroundColor = '#e0e0e0'; // Domyślny kolor
+    });
+    selectedElement.style.backgroundColor = '#c0c0ff'; // Kolor dla wybranego
+}
+
 
 function showPosition(position) {
     const lat = position.coords.latitude;
@@ -83,25 +100,15 @@ function handleError(error) {
     console.error(`Błąd geolokalizacji: ${error.message}`);
 }
 
-// Znajdowanie i wyświetlanie tras biegowych
-async function findRunningRoute(length) {
-    if (!mapInitialized) {
-        alert("Najpierw zainicjalizuj mapę.");
-        return;
-    }
-
-    const currentPosition = marker.getLatLng();
+async function findRunningRoute(park, length) {
     try {
-        const parkCoordinates = await findNearbyPark(currentPosition);
-        if (!parkCoordinates) {
-            alert("Nie znaleziono pobliskich parków lub terenów zielonych.");
-            return;
-        }
-
-        console.log("teraz bedzie szukac trasy");
-        const routeCoords = await fetchRunningRoute(parkCoordinates, length);
-        console.log("udalo sie wyszukac trase teraz bedzie wyswietlac na mapie");
+        const routeCoords = await fetchRunningRoute(park, length);
+        console.log("Trasa została znaleziona, teraz wyświetlam na mapie.");
         showRouteOnMap(routeCoords);
+
+        // Znajdź pobliskie parki wokół wybranego punktu startowego
+        const nearbyParks = await findNearbyPark({ lat: park.lat, lng: park.lng });
+        displayParkList(nearbyParks);
     } catch (error) {
         console.error("Błąd podczas wyszukiwania trasy:", error.message);
         alert("Nie udało się wygenerować trasy.");
