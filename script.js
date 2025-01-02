@@ -2,6 +2,8 @@ let map;
 let marker;
 let mapInitialized = false;
 let selectedPark = null;
+let routeLayer = null; // Globalna zmienna dla warstwy trasy
+
 
 document.getElementById('start').addEventListener('click', initializeMap);
 document.getElementById('stop').addEventListener('click', stopTracking);
@@ -102,18 +104,14 @@ function handleError(error) {
 
 async function findRunningRoute(park, length) {
     try {
-        const routeCoords = await fetchRunningRoute(park, length);
-        console.log("Trasa została znaleziona, teraz wyświetlam na mapie.");
-        showRouteOnMap(routeCoords);
-
-        // Znajdź pobliskie parki wokół wybranego punktu startowego
-        const nearbyParks = await findNearbyPark({ lat: park.lat, lng: park.lng });
-        displayParkList(nearbyParks);
+        const routeCoords = await fetchRunningRoute(park, length); // Pobierz współrzędne trasy
+        showRouteOnMap(routeCoords); // Wyświetl trasę na mapie
     } catch (error) {
         console.error("Błąd podczas wyszukiwania trasy:", error.message);
         alert("Nie udało się wygenerować trasy.");
     }
 }
+
 
 async function findNearbyPark(position) {
     const accessToken = 'pk.eyJ1Ijoic3BhY2hvbHNraXV6IiwiYSI6ImNtNTlxeG14ZTBzZ24ya3I3NWJxaG45bGEifQ.gr1iTou9gln94P7i9IimbA';
@@ -135,48 +133,28 @@ async function findNearbyPark(position) {
     }));
 }
 
-
-// Pobieranie trasy biegowej za pomocą GraphHopper VRP API
 async function fetchRunningRoute(startCoords, length) {
-    
-    console.log(startCoords.lng)
-    console.log(startCoords.lat)
-
-    const lengthInKm = length * 1000
+    const lengthInKm = length * 1000;
     const requestData = {
-        "points": [
-          [
-            startCoords.lng,
-            startCoords.lat
-          ]
-        ],
-        "snap_preventions": [
-          "motorway",
-          "ferry",
-          "tunnel"
-        ],
-        "details": [
-          "road_class",
-          "surface"
-        ],
-        "profile": "foot",
-        "locale": "en",
-        "instructions": true,
-        "calc_points": true,
-        "points_encoded": false,
-        "algorithm": "round_trip",
-        "round_trip.distance": lengthInKm
-      };
+        points: [[startCoords.lng, startCoords.lat]],
+        snap_preventions: ["motorway", "ferry", "tunnel"],
+        details: ["road_class", "surface"],
+        profile: "foot",
+        locale: "en",
+        instructions: false, // Wyłącz instrukcje
+        calc_points: true,  // Włącz punkty pośrednie
+        points_encoded: false,
+        algorithm: "round_trip",
+        "round_trip.distance": lengthInKm,
+    };
 
     const apiKey = '93a3b274-79b8-4135-b194-ffa540553b68';
     const url = `https://graphhopper.com/api/1/route?key=${apiKey}`;
 
     const response = await fetch(url, {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(requestData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData),
     });
 
     if (!response.ok) {
@@ -184,20 +162,29 @@ async function fetchRunningRoute(startCoords, length) {
     }
 
     const data = await response.json();
-    
+
     if (data.paths && data.paths.length > 0) {
-        const path = data.paths[0];
-        
-        return path.points.coordinates.map(coord => ({ lat: coord[1], lng: coord[0] }));
+        const points = data.paths[0].points.coordinates.map(coord => ({
+            lat: coord[1], // Zamień kolejność współrzędnych z [lng, lat] na [lat, lng]
+            lng: coord[0],
+        }));
+        return points; // Zwróć współrzędne trasy
     } else {
         throw new Error("Brak trasy w odpowiedzi API.");
     }
 }
 
-function showRouteOnMap(coordinates) {
-    const waypoints = coordinates.map(coord => L.latLng(coord.lat, coord.lng));
-    L.Routing.control({
-        waypoints: waypoints,
-        routeWhileDragging: true,
-    }).addTo(map);
+
+function showRouteOnMap(routeCoords) {
+    // Usuń poprzednią warstwę trasy, jeśli istnieje
+    if (routeLayer) {
+        map.removeLayer(routeLayer);
+    }
+
+    // Narysuj linię trasy na mapie
+    routeLayer = L.polyline(routeCoords, { color: 'blue', weight: 4 }).addTo(map);
+
+    // Dopasuj widok mapy do trasy
+    map.fitBounds(routeLayer.getBounds());
 }
+
