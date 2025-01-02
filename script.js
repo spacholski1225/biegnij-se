@@ -25,6 +25,8 @@ function initializeMap() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(position => {
                 showPosition(position);
+                console.log(position.coords.latitude);
+                console.log(position.coords.longitude);
                 findNearbyPark({
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
@@ -114,8 +116,11 @@ async function findRunningRoute(park, length) {
 
 
 async function findNearbyPark(position) {
-    const accessToken = 'pk.eyJ1Ijoic3BhY2hvbHNraXV6IiwiYSI6ImNtNTlxeG14ZTBzZ24ya3I3NWJxaG45bGEifQ.gr1iTou9gln94P7i9IimbA';
-    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/park.json?access_token=${accessToken}&proximity=${position.lng},${position.lat}&limit=5`;
+    const apiKey = 'AIzaSyBaYLt-jw6dhLL1dOxiZ9k4gl5e70reK_Y'; // Wstaw swój klucz API Google Maps
+    const radius = 15000; // Promień wyszukiwania w metrach (możesz dostosować)
+    const type = 'park'; // Typ miejsca
+
+    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.lat},${position.lng}&radius=${radius}&type=${type}&key=${apiKey}`;
 
     const response = await fetch(url);
 
@@ -124,14 +129,15 @@ async function findNearbyPark(position) {
     }
 
     const data = await response.json();
-    if (data.features.length === 0) return [];
+    if (!data.results || data.results.length === 0) return [];
 
-    return data.features.map(feature => ({
-        name: feature.text, 
-        lat: feature.geometry.coordinates[1], 
-        lng: feature.geometry.coordinates[0]
+    return data.results.slice(0, 5).map(park => ({
+        name: park.name,
+        lat: park.geometry.location.lat,
+        lng: park.geometry.location.lng
     }));
 }
+
 
 async function fetchRunningRoute(startCoords, length) {
     const lengthInKm = length * 1000;
