@@ -16,13 +16,40 @@ document.getElementById('search').addEventListener('click', () => {
 function initializeMap() {
     if (!mapInitialized) {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition, handleError);
+            navigator.geolocation.getCurrentPosition(position => {
+                showPosition(position);
+                findNearbyPark({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                }).then(parks => displayParkList(parks));
+            }, handleError);
         } else {
             alert("Geolokalizacja nie jest wspierana przez tę przeglądarkę.");
         }
     } else {
         alert("Mapa jest już zainicjalizowana.");
     }
+}
+
+function displayParkList(parks) {
+    const parkListContainer = document.getElementById('park-list');
+    const parkList = document.getElementById('parks');
+
+    parkList.innerHTML = ''; // Czyść listę przed dodaniem nowych elementów
+
+    parks.forEach(park => {
+        const li = document.createElement('li');
+        li.textContent = park.name;
+        li.addEventListener('click', () => {
+            map.setView([park.lat, park.lng], 15);
+            L.marker([park.lat, park.lng]).addTo(map)
+                .bindPopup(`Park: ${park.name}`)
+                .openPopup();
+        });
+        parkList.appendChild(li);
+    });
+
+    parkListContainer.style.display = 'block'; // Wyświetl kontener listy parków
 }
 
 function showPosition(position) {

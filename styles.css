@@ -126,3 +126,32 @@ button:hover {
     background-color: #d0d0d0;
 }
 
+.park-list-container {
+    background-color: #f9f9f9;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+    display: none; /* Ukryte domyślnie */
+}
+
+.park-list-container h3 {
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.park-list-container ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.park-list-container li {
+    padding: 5px 10px;
+    margin-bottom: 5px;
+    background-color: #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.park-list-container li:hover {
+    background-color: #d0d0d0;
+}
