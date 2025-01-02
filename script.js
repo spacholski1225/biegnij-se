@@ -115,28 +115,32 @@ async function findRunningRoute(park, length) {
 }
 
 
-async function findNearbyPark(position) {
-    const apiKey = 'AIzaSyBaYLt-jw6dhLL1dOxiZ9k4gl5e70reK_Y'; // Wstaw swój klucz API Google Maps
-    const radius = 15000; // Promień wyszukiwania w metrach (możesz dostosować)
-    const type = 'park'; // Typ miejsca
+function findNearbyPark(position) {
+    return new Promise((resolve, reject) => {
+        const { lat, lng } = position;
+        const location = new google.maps.LatLng(lat, lng);
+        const service = new google.maps.places.PlacesService(document.createElement('div'));
 
-    const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.lat},${position.lng}&radius=${radius}&type=${type}&key=${apiKey}`;
+        const request = {
+            location: location,
+            radius: 15000,
+            type: ['park']
+        };
 
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error("Błąd podczas wyszukiwania parków.");
-    }
-
-    const data = await response.json();
-    if (!data.results || data.results.length === 0) return [];
-
-    return data.results.slice(0, 5).map(park => ({
-        name: park.name,
-        lat: park.geometry.location.lat,
-        lng: park.geometry.location.lng
-    }));
+        service.nearbySearch(request, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK) {
+                resolve(results.slice(0, 5).map(park => ({
+                    name: park.name,
+                    lat: park.geometry.location.lat(),
+                    lng: park.geometry.location.lng()
+                })));
+            } else {
+                reject('Błąd podczas wyszukiwania parków.');
+            }
+        });
+    });
 }
+
 
 
 async function fetchRunningRoute(startCoords, length) {
