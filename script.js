@@ -2,7 +2,7 @@ let map;
 let marker;
 let mapInitialized = false;
 let selectedPark = null;
-let routeLayer = null; // Globalna zmienna dla warstwy trasy
+let routeLayer = null;
 
 
 document.getElementById('start').addEventListener('click', initializeMap);
@@ -39,20 +39,21 @@ function initializeMap() {
         alert("Mapa jest już zainicjalizowana.");
     }
 }
-
 function displayParkList(parks) {
     const parkListContainer = document.getElementById('park-list');
     const parkList = document.getElementById('parks');
 
-    parkList.innerHTML = ''; // Czyść listę przed dodaniem nowych elementów
-    selectedPark = null; // Resetuj wybrany park
+    parkList.innerHTML = '';
+    selectedPark = null;
 
-    parks.forEach(park => {
+    const sortedParks = parks.sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedParks.forEach(park => {
         const li = document.createElement('li');
         li.textContent = park.name;
         li.addEventListener('click', () => {
-            selectedPark = park; // Ustaw wybrany park
-            highlightSelectedPark(li); // Podświetl kliknięty element
+            selectedPark = park;
+            highlightSelectedPark(li);
             map.setView([park.lat, park.lng], 15);
             L.marker([park.lat, park.lng]).addTo(map)
                 .bindPopup(`Park: ${park.name}`)
@@ -61,15 +62,16 @@ function displayParkList(parks) {
         parkList.appendChild(li);
     });
 
-    parkListContainer.style.display = 'block'; // Wyświetl kontener listy parków
+    parkListContainer.style.display = 'block';
 }
+
 
 function highlightSelectedPark(selectedElement) {
     const allListItems = document.querySelectorAll('#parks li');
     allListItems.forEach(item => {
-        item.style.backgroundColor = '#e0e0e0'; // Domyślny kolor
+        item.style.backgroundColor = '#e0e0e0';
     });
-    selectedElement.style.backgroundColor = '#c0c0ff'; // Kolor dla wybranego
+    selectedElement.style.backgroundColor = '#c0c0ff';
 }
 
 
@@ -106,8 +108,8 @@ function handleError(error) {
 
 async function findRunningRoute(park, length) {
     try {
-        const routeCoords = await fetchRunningRoute(park, length); // Pobierz współrzędne trasy
-        showRouteOnMap(routeCoords); // Wyświetl trasę na mapie
+        const routeCoords = await fetchRunningRoute(park, length); 
+        showRouteOnMap(routeCoords); 
     } catch (error) {
         console.error("Błąd podczas wyszukiwania trasy:", error.message);
         alert("Nie udało się wygenerować trasy.");
@@ -129,7 +131,7 @@ function findNearbyPark(position) {
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                resolve(results.slice(0, 5).map(park => ({
+                resolve(results.slice(0, 20).map(park => ({
                     name: park.name,
                     lat: park.geometry.location.lat(),
                     lng: park.geometry.location.lng()
@@ -141,8 +143,6 @@ function findNearbyPark(position) {
     });
 }
 
-
-
 async function fetchRunningRoute(startCoords, length) {
     const lengthInKm = length * 1000;
     const requestData = {
@@ -151,8 +151,8 @@ async function fetchRunningRoute(startCoords, length) {
         details: ["road_class", "surface"],
         profile: "foot",
         locale: "en",
-        instructions: false, // Wyłącz instrukcje
-        calc_points: true,  // Włącz punkty pośrednie
+        instructions: false, 
+        calc_points: true, 
         points_encoded: false,
         algorithm: "round_trip",
         "round_trip.distance": lengthInKm,
@@ -175,10 +175,10 @@ async function fetchRunningRoute(startCoords, length) {
 
     if (data.paths && data.paths.length > 0) {
         const points = data.paths[0].points.coordinates.map(coord => ({
-            lat: coord[1], // Zamień kolejność współrzędnych z [lng, lat] na [lat, lng]
+            lat: coord[1],
             lng: coord[0],
         }));
-        return points; // Zwróć współrzędne trasy
+        return points;
     } else {
         throw new Error("Brak trasy w odpowiedzi API.");
     }
@@ -186,15 +186,12 @@ async function fetchRunningRoute(startCoords, length) {
 
 
 function showRouteOnMap(routeCoords) {
-    // Usuń poprzednią warstwę trasy, jeśli istnieje
     if (routeLayer) {
         map.removeLayer(routeLayer);
     }
 
-    // Narysuj linię trasy na mapie
     routeLayer = L.polyline(routeCoords, { color: 'blue', weight: 4 }).addTo(map);
 
-    // Dopasuj widok mapy do trasy
     map.fitBounds(routeLayer.getBounds());
 }
 
