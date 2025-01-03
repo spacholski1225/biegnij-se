@@ -137,13 +137,13 @@ function findNearbyPark(position) {
 
         const request = {
             location: location,
-            radius: 15000,
+            radius: 10000,
             type: ['park']
         };
 
         service.nearbySearch(request, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK) {
-                resolve(results.slice(0, 20).map(park => ({
+                resolve(results.slice(0, 10).map(park => ({
                     name: park.name,
                     lat: park.geometry.location.lat(),
                     lng: park.geometry.location.lng()
