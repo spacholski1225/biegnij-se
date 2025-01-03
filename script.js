@@ -230,11 +230,27 @@ function stopTimer() {
 
     const saveTime = confirm(`Otrzymany czas: ${formattedTime}. Czy chcesz go zapisać?`);
     if (saveTime) {
-        console.log(`Zapisany czas: ${formattedTime}`);
-        // Można tu dodać logikę zapisu w lokalnej pamięci lub bazie danych.
-        localStorage.setItem("lastSavedTime", formattedTime);
+        if (!selectedPark) {
+            alert("Nie wybrano parku. Nie można zapisać danych.");
+            return;
+        }
+
+        const routeLength = document.getElementById('route-length').value;
+        const parkName = selectedPark.name;
+
+        const savedData = {
+            time: formattedTime,
+            routeLength: `${routeLength} km`,
+            parkName: parkName,
+        };
+
+        console.log("Zapisane dane:", savedData);
+        localStorage.setItem("lastSavedTimeData", JSON.stringify(savedData));
+
+        alert(`Dane zapisane:\nCzas: ${formattedTime}\nDługość trasy: ${routeLength} km\nPark: ${parkName}`);
     }
 }
+
 
 function toggleTimer() {
     const toggleButton = document.getElementById('toggle-timer');
