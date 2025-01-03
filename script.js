@@ -81,7 +81,6 @@ function highlightSelectedPark(selectedElement) {
     selectedElement.style.backgroundColor = '#c0c0ff';
 }
 
-
 function showPosition(position) {
     const lat = position.coords.latitude;
     const lng = position.coords.longitude;
@@ -93,7 +92,13 @@ function showPosition(position) {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        marker = L.marker([lat, lng]).addTo(map)
+        // Dodanie kropeczki jako markera
+        marker = L.circleMarker([lat, lng], {
+            color: '#1E90FF', // Kolor obramowania kropeczki
+            fillColor: '#1E90FF', // Kolor wypełnienia kropeczki
+            fillOpacity: 1, // Pełne wypełnienie
+            radius: 6 // Promień kropeczki
+        }).addTo(map)
             .bindPopup('Jesteś tutaj.')
             .openPopup();
 
@@ -200,7 +205,6 @@ function showRouteOnMap(routeCoords) {
 
     map.fitBounds(routeLayer.getBounds());
 }
-
 function formatTime(ms) {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
@@ -220,6 +224,16 @@ function startTimer() {
 function stopTimer() {
     clearInterval(timerInterval);
     timerInterval = null;
+
+    const elapsedTime = Date.now() - timerStartTime;
+    const formattedTime = formatTime(elapsedTime);
+
+    const saveTime = confirm(`Otrzymany czas: ${formattedTime}. Czy chcesz go zapisać?`);
+    if (saveTime) {
+        console.log(`Zapisany czas: ${formattedTime}`);
+        // Można tu dodać logikę zapisu w lokalnej pamięci lub bazie danych.
+        localStorage.setItem("lastSavedTime", formattedTime);
+    }
 }
 
 function toggleTimer() {

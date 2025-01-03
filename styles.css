@@ -38,7 +38,6 @@ body, html {
     width: 100%;
     border: none;
 }
-
 .buttons {
     display: flex;
     justify-content: space-evenly;
@@ -48,6 +47,7 @@ body, html {
     position: sticky; /* Przyciski zawsze widoczne na górze */
     top: 0;
     z-index: 1000; /* Ustawienie na najwyższą warstwę */
+    gap: 3px; /* Odstęp między przyciskami */
 }
 
 button {
@@ -66,6 +66,7 @@ button {
 button:hover {
     transform: scale(1.05);
 }
+
 
 .green-button {
     background-color: #4CAF50;
