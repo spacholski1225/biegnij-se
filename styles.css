@@ -200,3 +200,11 @@ button:hover {
 .central-start-button:hover {
     transform: scale(1.1);
 }
+#timer-display {
+    font-size: 18px;
+    font-weight: bold;
+    margin-right: 20px;
+    align-self: center;
+}
+
+

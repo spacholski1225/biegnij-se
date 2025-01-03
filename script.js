@@ -3,10 +3,10 @@ let marker;
 let mapInitialized = false;
 let selectedPark = null;
 let routeLayer = null;
+let timerInterval;
+let timerStartTime = null;
 
 
-document.getElementById('start').addEventListener('click', initializeMap);
-document.getElementById('stop').addEventListener('click', stopTracking);
 document.getElementById('search').addEventListener('click', () => {
     const length = parseFloat(document.getElementById('route-length').value);
     if (!selectedPark) {
@@ -25,6 +25,7 @@ document.getElementById('central-start').addEventListener('click', () => {
     initializeMap(); // Zainicjuj mapę
 });
 
+document.getElementById('toggle-timer').addEventListener('click', toggleTimer);
 
 function initializeMap() {
     if (!mapInitialized) {
@@ -190,7 +191,6 @@ async function fetchRunningRoute(startCoords, length) {
     }
 }
 
-
 function showRouteOnMap(routeCoords) {
     if (routeLayer) {
         map.removeLayer(routeLayer);
@@ -201,3 +201,41 @@ function showRouteOnMap(routeCoords) {
     map.fitBounds(routeLayer.getBounds());
 }
 
+function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+    const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+    const seconds = String(totalSeconds % 60).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+function startTimer() {
+    timerStartTime = Date.now();
+    timerInterval = setInterval(() => {
+        const elapsedTime = Date.now() - timerStartTime;
+        document.getElementById('timer-display').textContent = formatTime(elapsedTime);
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+function toggleTimer() {
+    const toggleButton = document.getElementById('toggle-timer');
+
+    if (!timerInterval) {
+        // Start Timer
+        startTimer();
+        toggleButton.textContent = "Stop Timer";
+        toggleButton.classList.remove("green-button");
+        toggleButton.classList.add("red-button");
+    } else {
+        // Stop Timer
+        stopTimer();
+        toggleButton.textContent = "Start Timer";
+        toggleButton.classList.remove("red-button");
+        toggleButton.classList.add("green-button");
+    }
+}
