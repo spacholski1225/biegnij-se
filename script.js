@@ -19,6 +19,12 @@ document.getElementById('search').addEventListener('click', () => {
         alert("Wybierz długość trasy!");
     }
 });
+document.getElementById('central-start').addEventListener('click', () => {
+    const startOverlay = document.getElementById('start-overlay');
+    startOverlay.style.display = 'none'; // Ukryj przycisk centralny
+    initializeMap(); // Zainicjuj mapę
+});
+
 
 function initializeMap() {
     if (!mapInitialized) {
